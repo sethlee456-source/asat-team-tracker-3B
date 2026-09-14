@@ -53,6 +53,8 @@ const totalSurveysForAgent = (agent) =>
 document.getElementById("current-score").textContent = trackerData.currentResult.toFixed(2);
 document.getElementById("score-delta").textContent =
   delta >= 0 ? `+${delta.toFixed(2)} above target` : `${delta.toFixed(2)} below target`;
+document.getElementById("target-mark").textContent = `Target ${trackerData.targetResult.toFixed(2)}`;
+document.getElementById("current-mark").textContent = `Current ${trackerData.currentResult.toFixed(2)}`;
 document.getElementById("quest-status").textContent =
   delta >= 0
     ? "The fortress is safely above the target line."
@@ -60,7 +62,7 @@ document.getElementById("quest-status").textContent =
 document.getElementById("progress-fill").style.width = `${progressPercent}%`;
 document
   .querySelector(".progress-track")
-  .setAttribute("aria-valuenow", String(Math.min(trackerData.currentResult, trackerData.targetResult)));
+  .setAttribute("aria-valuenow", String(trackerData.currentResult));
 document
   .querySelector(".progress-track")
   .setAttribute(
