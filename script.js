@@ -66,8 +66,9 @@ const createNode = (tagName, className, text) => {
 document.getElementById("current-score").textContent = trackerData.currentResult.toFixed(2);
 document.getElementById("score-delta").textContent =
   delta >= 0 ? `+${delta.toFixed(2)} above target` : `${delta.toFixed(2)} below target`;
-document.getElementById("target-mark").textContent = `Target ${trackerData.targetResult.toFixed(2)}`;
-document.getElementById("current-mark").textContent = `Current ${trackerData.currentResult.toFixed(2)}`;
+document.getElementById("target-mark").textContent = `Target marker ${trackerData.targetResult.toFixed(2)}`;
+document.getElementById("current-mark").textContent = `Current ${trackerData.currentResult.toFixed(2)} / 5.00`;
+document.getElementById("scale-note").textContent = "Bar shows the current ASAT score on the full 5-point scale.";
 document.getElementById("quest-status").textContent =
   delta >= 0
     ? "The fortress is safely above the target line."
@@ -80,7 +81,7 @@ document
   .querySelector(".progress-track")
   .setAttribute(
     "aria-valuetext",
-    `${trackerData.currentResult.toFixed(2)} out of ${trackerData.targetResult.toFixed(2)} target score`
+    `${trackerData.currentResult.toFixed(2)} out of 5.00 on the ASAT scale, with a target of ${trackerData.targetResult.toFixed(2)}`
   );
 
 [

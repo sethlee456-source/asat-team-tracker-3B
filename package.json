@@ -5,7 +5,7 @@
   "main": "script.js",
   "scripts": {
     "start": "python3 -m http.server 4173",
-    "test": "echo \"No automated tests configured\""
+    "test": "node --check script.js && test -s index.html && test -s styles.css"
   },
   "keywords": [],
   "author": "",
