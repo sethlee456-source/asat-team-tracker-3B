@@ -96,6 +96,11 @@ h1 {
   color: var(--muted);
 }
 
+.live-stamp {
+  margin-bottom: 0;
+  color: var(--success);
+}
+
 .hero-stats,
 .grid,
 .agent-grid,
@@ -175,6 +180,129 @@ h1 {
   padding: 24px;
   border-radius: 24px;
   background: var(--panel);
+}
+
+.editor-shell,
+.share-box,
+.editor-summary-grid,
+.editor-actions,
+.editor-topbar,
+.editor-submit-row {
+  display: grid;
+  gap: 16px;
+}
+
+.editor-topbar {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  margin-bottom: 20px;
+}
+
+.editor-actions {
+  grid-auto-flow: column;
+}
+
+.share-box {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  margin-bottom: 20px;
+}
+
+.share-link {
+  color: var(--gold);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.editor-form {
+  display: grid;
+  gap: 20px;
+}
+
+.editor-summary-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.editor-field {
+  display: grid;
+  gap: 8px;
+}
+
+.editor-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.editor-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(164, 182, 255, 0.2);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font: inherit;
+}
+
+.editor-input:read-only,
+.editor-input:disabled {
+  opacity: 0.8;
+}
+
+.castle-button {
+  padding: 12px 16px;
+  border: 1px solid rgba(124, 92, 255, 0.5);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(124, 92, 255, 0.95), rgba(73, 41, 169, 0.95));
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.castle-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.castle-button-secondary {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.editor-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.editor-table th,
+.editor-table td {
+  padding: 10px 8px;
+  text-align: left;
+  border-bottom: 1px solid rgba(164, 182, 255, 0.12);
+}
+
+.editor-table th {
+  color: var(--gold);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+}
+
+.agent-table-name {
+  min-width: 180px;
+}
+
+#sync-status[data-tone="success"] {
+  color: var(--success);
+}
+
+#sync-status[data-tone="warn"] {
+  color: var(--gold);
+}
+
+#sync-status[data-tone="error"] {
+  color: var(--danger);
 }
 
 .panel-heading {
@@ -337,5 +465,14 @@ h1 {
   .panel-heading {
     align-items: start;
     flex-direction: column;
+  }
+
+  .editor-topbar,
+  .share-box {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-actions {
+    grid-auto-flow: row;
   }
 }
