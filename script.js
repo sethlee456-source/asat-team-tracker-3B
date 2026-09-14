@@ -92,6 +92,7 @@ const appendCards = (container, cards) => {
 
 const applyProgressA11y = (progressTrack, progressFill, a11yConfig, progressPercent) => {
   progressTrack.setAttribute("aria-label", a11yConfig.label);
+  progressTrack.setAttribute("aria-valuemin", "0");
   progressTrack.setAttribute("aria-valuemax", String(a11yConfig.max));
   progressTrack.setAttribute("aria-valuenow", String(a11yConfig.now));
   progressTrack.setAttribute("aria-valuetext", a11yConfig.text);
