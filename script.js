@@ -1,3 +1,4 @@
+const STORAGE_KEY = "asat-team-3b-tracker";
 const trackerData = {
   teamName: "Team 3B",
   totalAgents: 18,
@@ -26,15 +27,6 @@ const trackerData = {
 };
 
 const starKeys = [5, 4, 3, 2, 1];
-const firebaseDefaults = {
-  enabled: false,
-  editorEmails: [],
-  shareUrl: "",
-  firestore: {
-    collection: "trackers",
-    documentId: "team-3b"
-  }
-};
 
 const formatScore = (value) => (value === null ? "N/A" : value.toFixed(2).replace(/\.00$/, ""));
 const cloneTrackerData = (data) => JSON.parse(JSON.stringify(data));
@@ -54,7 +46,6 @@ const sanitizeScore = (value) => {
 
   return Math.max(0, Math.min(5, Number(parsed.toFixed(2))));
 };
-
 const sanitizeText = (value, fallback = "") => String(value ?? fallback).trim();
 
 const normalizeSurveys = (surveys) => {
@@ -70,14 +61,11 @@ const normalizeSurveys = (surveys) => {
   return Object.values(normalized).some((count) => count > 0) ? normalized : null;
 };
 
-const normalizeAgent = (agent, fallbackAgent = {}) => {
-  const name = sanitizeText(agent?.name, fallbackAgent.name);
-  return {
-    name,
-    score: sanitizeScore(agent?.score),
-    surveys: normalizeSurveys(agent?.surveys)
-  };
-};
+const normalizeAgent = (agent, fallbackAgent = {}) => ({
+  name: sanitizeText(agent?.name, fallbackAgent.name),
+  score: sanitizeScore(agent?.score),
+  surveys: normalizeSurveys(agent?.surveys)
+});
 
 const normalizeTrackerData = (data, fallbackData = trackerData) => {
   const fallbackAgents = fallbackData.agents || [];
@@ -106,6 +94,7 @@ const calculateStarTotals = (agents) =>
       Object.entries(agent.surveys).forEach(([star, count]) => {
         totals[star] = (totals[star] || 0) + count;
       });
+
       return totals;
     },
     { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
@@ -142,25 +131,41 @@ const getProgressA11y = (data, delta) => ({
       : `${data.currentResult.toFixed(2)} out of 5.00. Target ${data.targetResult.toFixed(2)} still ahead.`
 });
 
-const getFirebaseConfig = (config) => ({
-  ...firebaseDefaults,
-  ...(config || {}),
-  firestore: {
-    ...firebaseDefaults.firestore,
-    ...(config?.firestore || {})
-  },
-  editorEmails: Array.isArray(config?.editorEmails) ? config.editorEmails.map((email) => String(email).toLowerCase()) : []
-});
+const getShareUrl = (locationObject) => {
+  if (locationObject?.href) {
+    return locationObject.href;
+  }
 
-const isConfiguredForLiveSync = (config) =>
-  Boolean(
-    config.enabled &&
-      config.firebaseConfig &&
-      config.firebaseConfig.apiKey &&
-      config.firebaseConfig.authDomain &&
-      config.firebaseConfig.projectId &&
-      config.firebaseConfig.appId
-  );
+  return "index.html";
+};
+
+const exportTrackerData = (data) => `${JSON.stringify(normalizeTrackerData(data), null, 2)}\n`;
+
+const importTrackerData = (rawText, fallbackData = trackerData) => {
+  const parsed = JSON.parse(rawText);
+  return normalizeTrackerData(parsed, fallbackData);
+};
+
+const saveTrackerState = (storage, data, storageKey = STORAGE_KEY) => {
+  if (!storage?.setItem) {
+    return;
+  }
+
+  storage.setItem(storageKey, exportTrackerData(data));
+};
+
+const loadTrackerState = (storage, fallbackData = trackerData, storageKey = STORAGE_KEY) => {
+  if (!storage?.getItem) {
+    return cloneTrackerData(fallbackData);
+  }
+
+  try {
+    const stored = storage.getItem(storageKey);
+    return stored ? importTrackerData(stored, fallbackData) : cloneTrackerData(fallbackData);
+  } catch {
+    return cloneTrackerData(fallbackData);
+  }
+};
 
 const createNode = (doc, tagName, className, text) => {
   const node = doc.createElement(tagName);
@@ -186,7 +191,7 @@ const appendCards = (container, cards) => {
   cards.forEach((card) => container.append(card));
 };
 
-const createInput = (doc, { name, type = "text", value = "", min, max, step, readOnly = false, disabled = false }) => {
+const createInput = (doc, { name, type = "text", value = "", min, max, step, readOnly = false }) => {
   const input = doc.createElement("input");
   input.name = name;
   input.type = type;
@@ -206,9 +211,6 @@ const createInput = (doc, { name, type = "text", value = "", min, max, step, rea
   if (readOnly) {
     input.readOnly = true;
   }
-  if (disabled) {
-    input.disabled = true;
-  }
 
   return input;
 };
@@ -219,12 +221,13 @@ const createField = (doc, label, input) => {
   return field;
 };
 
-const renderEditorRows = (doc, tbody, data, canEdit) => {
+const renderEditorRows = (doc, tbody, data) => {
   clearNode(tbody);
 
   data.agents.forEach((agent, index) => {
     const row = createNode(doc, "tr");
-    const nameCell = createNode(doc, "td", "agent-table-name", agent.name);
+    row.append(createNode(doc, "td", "agent-table-name", agent.name));
+
     const scoreCell = createNode(doc, "td");
     scoreCell.append(
       createInput(doc, {
@@ -233,11 +236,10 @@ const renderEditorRows = (doc, tbody, data, canEdit) => {
         value: agent.score === null ? "" : String(agent.score),
         min: 0,
         max: 5,
-        step: 0.01,
-        disabled: !canEdit
+        step: 0.01
       })
     );
-    row.append(nameCell, scoreCell);
+    row.append(scoreCell);
 
     starKeys.forEach((star) => {
       const cell = createNode(doc, "td");
@@ -247,8 +249,7 @@ const renderEditorRows = (doc, tbody, data, canEdit) => {
           type: "number",
           value: agent.surveys ? String(agent.surveys[star] || 0) : "0",
           min: 0,
-          step: 1,
-          disabled: !canEdit
+          step: 1
         })
       );
       row.append(cell);
@@ -258,54 +259,26 @@ const renderEditorRows = (doc, tbody, data, canEdit) => {
   });
 };
 
-const renderEditorForm = (doc, data, canEdit) => {
-  const form = doc.getElementById("editor-form");
+const renderEditorForm = (doc, data) => {
   const summaryFields = doc.getElementById("editor-summary-fields");
   const tbody = doc.getElementById("editor-agent-rows");
-  const saveButton = doc.getElementById("save-button");
 
   clearNode(summaryFields);
   summaryFields.append(
-    createField(
-      doc,
-      "Team name",
-      createInput(doc, {
-        name: "teamName",
-        value: data.teamName,
-        disabled: !canEdit
-      })
-    ),
+    createField(doc, "Team name", createInput(doc, { name: "teamName", value: data.teamName })),
     createField(
       doc,
       "Current result",
-      createInput(doc, {
-        name: "currentResult",
-        type: "number",
-        value: String(data.currentResult),
-        min: 0,
-        max: 5,
-        step: 0.01,
-        disabled: !canEdit
-      })
+      createInput(doc, { name: "currentResult", type: "number", value: String(data.currentResult), min: 0, max: 5, step: 0.01 })
     ),
     createField(
       doc,
       "Target result",
-      createInput(doc, {
-        name: "targetResult",
-        type: "number",
-        value: String(data.targetResult),
-        min: 0,
-        max: 5,
-        step: 0.01,
-        disabled: !canEdit
-      })
+      createInput(doc, { name: "targetResult", type: "number", value: String(data.targetResult), min: 0, max: 5, step: 0.01 })
     )
   );
 
-  renderEditorRows(doc, tbody, data, canEdit);
-  saveButton.disabled = !canEdit;
-  form.hidden = false;
+  renderEditorRows(doc, tbody, data);
 };
 
 const applyProgressA11y = (progressTrack, progressFill, a11yConfig, progressPercent) => {
@@ -317,7 +290,7 @@ const applyProgressA11y = (progressTrack, progressFill, a11yConfig, progressPerc
   progressFill.style.width = `${progressPercent}%`;
 };
 
-const renderTracker = (doc, data, liveMeta = {}) => {
+const renderTracker = (doc, data, meta = {}) => {
   const metrics = getTrackerMetrics(data);
   const a11yConfig = getProgressA11y(data, metrics.delta);
   const heroStats = doc.getElementById("hero-stats");
@@ -325,9 +298,6 @@ const renderTracker = (doc, data, liveMeta = {}) => {
   const starBreakdown = doc.getElementById("star-breakdown");
   const priorityHeroes = doc.getElementById("priority-heroes");
   const agentGrid = doc.getElementById("agent-grid");
-  const progressTrack = doc.querySelector(".progress-track");
-  const progressFill = doc.getElementById("progress-fill");
-  const liveStamp = doc.getElementById("live-stamp");
 
   clearNode(heroStats);
   clearNode(overviewCards);
@@ -347,9 +317,9 @@ const renderTracker = (doc, data, liveMeta = {}) => {
     metrics.delta >= 0
       ? "The fortress is safely above the target line."
       : "The fortress needs more high-star wins to reach the target.";
-  liveStamp.textContent = liveMeta.lastUpdatedText || "Local data loaded";
+  doc.getElementById("live-stamp").textContent = meta.lastSavedText || "Starter data loaded";
 
-  applyProgressA11y(progressTrack, progressFill, a11yConfig, metrics.progressPercent);
+  applyProgressA11y(doc.querySelector(".progress-track"), doc.getElementById("progress-fill"), a11yConfig, metrics.progressPercent);
 
   appendCards(
     heroStats,
@@ -445,187 +415,149 @@ const renderTracker = (doc, data, liveMeta = {}) => {
         createNode(doc, "p", "agent-meta", agent.surveys ? "Battle record" : "No tracked score yet"),
         surveyBreakdown
       );
+
       return card;
     })
   );
 };
 
-const formatTimestamp = (value) => {
-  if (!value) {
-    return "Waiting for first live sync";
-  }
+const collectFormData = (form, currentData, FormDataImpl = FormData) => {
+  const formData = new FormDataImpl(form);
 
-  const parsed = value?.toDate ? value.toDate() : new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return "Waiting for first live sync";
-  }
+  return normalizeTrackerData(
+    {
+      teamName: sanitizeText(formData.get("teamName"), currentData.teamName),
+      totalAgents: currentData.agents.length,
+      currentResult: sanitizeScore(formData.get("currentResult")) ?? currentData.currentResult,
+      targetResult: sanitizeScore(formData.get("targetResult")) ?? currentData.targetResult,
+      agents: currentData.agents.map((agent, index) => {
+        const surveys = {};
+        starKeys.forEach((star) => {
+          surveys[star] = sanitizeCount(formData.get(`agent-${index}-star-${star}`));
+        });
 
-  return `Live update ${parsed.toLocaleString()}`;
+        return {
+          name: agent.name,
+          score: sanitizeScore(formData.get(`agent-score-${index}`)),
+          surveys: Object.values(surveys).some((count) => count > 0) ? surveys : null
+        };
+      })
+    },
+    currentData
+  );
 };
 
-const collectFormData = (form, currentData) => {
-  const formData = new FormData(form);
-  const nextData = {
-    teamName: sanitizeText(formData.get("teamName"), currentData.teamName),
-    totalAgents: currentData.agents.length,
-    currentResult: sanitizeScore(formData.get("currentResult")) ?? currentData.currentResult,
-    targetResult: sanitizeScore(formData.get("targetResult")) ?? currentData.targetResult,
-    agents: currentData.agents.map((agent, index) => {
-      const surveys = {};
-      starKeys.forEach((star) => {
-        surveys[star] = sanitizeCount(formData.get(`agent-${index}-star-${star}`));
-      });
-
-      return {
-        name: agent.name,
-        score: sanitizeScore(formData.get(`agent-score-${index}`)),
-        surveys: Object.values(surveys).some((count) => count > 0) ? surveys : null
-      };
-    })
-  };
-
-  return normalizeTrackerData(nextData, currentData);
-};
-
-const updateLiveStatus = (doc, message, tone = "info") => {
+const updateStatus = (doc, message, tone = "info") => {
   const status = doc.getElementById("sync-status");
   status.textContent = message;
   status.dataset.tone = tone;
 };
 
-const toggleEditorButtons = (doc, { canEdit, signedIn }) => {
-  doc.getElementById("sign-in-button").hidden = signedIn;
-  doc.getElementById("sign-out-button").hidden = !signedIn;
-  doc.getElementById("save-button").disabled = !canEdit;
+const formatSavedStamp = (date = new Date()) => `Last saved locally at ${date.toLocaleString()}`;
+
+const downloadTextFile = (filename, text) => {
+  const blob = new Blob([text], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 };
 
-const syncShareLink = (doc, config) => {
-  const shareUrl = config.shareUrl || (typeof window !== "undefined" ? window.location.href : "");
-  const link = doc.getElementById("share-link");
-  const input = doc.getElementById("share-url");
-  link.href = shareUrl;
-  link.textContent = shareUrl;
-  input.value = shareUrl;
-};
-
-const initializeLiveTracker = async (doc, config) => {
+const initializeTracker = (doc, options = {}) => {
+  const storage = options.storage || (typeof window !== "undefined" ? window.localStorage : null);
+  const locationObject = options.location || (typeof window !== "undefined" ? window.location : null);
+  const clipboard = options.clipboard || (typeof navigator !== "undefined" ? navigator.clipboard : null);
   const state = {
-    config,
-    data: cloneTrackerData(trackerData),
-    firebaseReady: false,
-    canEdit: false,
-    currentUser: null,
-    liveMeta: {}
+    data: loadTrackerState(storage, trackerData),
+    lastSavedText: "Loaded from local browser storage"
   };
 
-  renderTracker(doc, state.data, state.liveMeta);
-  renderEditorForm(doc, state.data, false);
-  syncShareLink(doc, config);
+  const form = doc.getElementById("editor-form");
+  const importInput = doc.getElementById("import-file");
+  const shareUrl = getShareUrl(locationObject);
 
-  if (!isConfiguredForLiveSync(config) || typeof window === "undefined" || !window.firebase) {
-    updateLiveStatus(doc, "Live sync is not configured yet. Add your Firebase config to firebase-config.js.", "warn");
-    return state;
-  }
+  doc.getElementById("share-url").value = shareUrl;
+  doc.getElementById("share-link").href = shareUrl;
+  doc.getElementById("share-link").textContent = "Open tracker";
 
-  if (!window.firebase.apps.length) {
-    window.firebase.initializeApp(config.firebaseConfig);
-  }
+  const rerender = () => {
+    renderTracker(doc, state.data, { lastSavedText: state.lastSavedText });
+    renderEditorForm(doc, state.data);
+  };
 
-  const auth = window.firebase.auth();
-  const db = window.firebase.firestore();
-  const provider = new window.firebase.auth.GoogleAuthProvider();
-  const docRef = db.collection(config.firestore.collection).doc(config.firestore.documentId);
+  rerender();
 
-  state.firebaseReady = true;
-  updateLiveStatus(doc, "Connecting to the live crystal archive…", "info");
-
-  doc.getElementById("sign-in-button").addEventListener("click", async () => {
-    try {
-      await auth.signInWithPopup(provider);
-    } catch (error) {
-      updateLiveStatus(doc, error.message || "Google sign-in failed.", "error");
-    }
-  });
-
-  doc.getElementById("sign-out-button").addEventListener("click", async () => {
-    await auth.signOut();
-  });
-
-  auth.onAuthStateChanged((user) => {
-    state.currentUser = user;
-    const email = user?.email ? user.email.toLowerCase() : "";
-    state.canEdit = Boolean(email && config.editorEmails.includes(email));
-    doc.getElementById("editor-user").textContent = user ? `Signed in as ${user.email}` : "Not signed in";
-    toggleEditorButtons(doc, { canEdit: state.canEdit, signedIn: Boolean(user) });
-    renderEditorForm(doc, state.data, state.canEdit);
-
-    if (!user) {
-      updateLiveStatus(doc, "View mode active. Sign in with an approved Google account to edit live data.", "info");
-    } else if (state.canEdit) {
-      updateLiveStatus(doc, "Editor access granted. Changes save live for everyone.", "success");
-    } else {
-      updateLiveStatus(doc, "Signed in, but this Google account is not in the editor allowlist.", "warn");
-    }
-  });
-
-  doc.getElementById("editor-form").addEventListener("submit", async (event) => {
+  form.addEventListener("submit", (event) => {
     event.preventDefault();
+    state.data = collectFormData(form, state.data);
+    saveTrackerState(storage, state.data);
+    state.lastSavedText = formatSavedStamp();
+    rerender();
+    updateStatus(doc, "Tracker changes saved in this browser.", "success");
+  });
 
-    if (!state.canEdit) {
-      updateLiveStatus(doc, "You need approved editor access before saving.", "error");
+  doc.getElementById("reset-button").addEventListener("click", () => {
+    state.data = cloneTrackerData(trackerData);
+    saveTrackerState(storage, state.data);
+    state.lastSavedText = "Starter data restored";
+    rerender();
+    updateStatus(doc, "Starter tracker data restored.", "warn");
+  });
+
+  doc.getElementById("export-button").addEventListener("click", () => {
+    downloadTextFile("team-3b-asat-tracker.json", exportTrackerData(state.data));
+    updateStatus(doc, "Tracker JSON exported for sharing.", "success");
+  });
+
+  doc.getElementById("import-button").addEventListener("click", () => {
+    importInput.click();
+  });
+
+  importInput.addEventListener("change", async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
       return;
     }
 
-    const nextData = collectFormData(event.currentTarget, state.data);
-
     try {
-      await docRef.set(
-        {
-          ...nextData,
-          updatedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
-          updatedBy: state.currentUser?.email || "unknown"
-        },
-        { merge: false }
-      );
-      updateLiveStatus(doc, "Live tracker saved.", "success");
-    } catch (error) {
-      updateLiveStatus(doc, error.message || "Saving failed.", "error");
+      const text = await file.text();
+      state.data = importTrackerData(text, trackerData);
+      saveTrackerState(storage, state.data);
+      state.lastSavedText = `Imported ${file.name}`;
+      rerender();
+      updateStatus(doc, "Tracker JSON imported.", "success");
+    } catch {
+      updateStatus(doc, "Import failed. Use a valid exported tracker JSON file.", "error");
     }
+
+    event.target.value = "";
   });
 
-  docRef.onSnapshot(
-    (snapshot) => {
-      if (snapshot.exists) {
-        const remote = snapshot.data();
-        state.data = normalizeTrackerData(remote, trackerData);
-        state.liveMeta = {
-          lastUpdatedText: `${formatTimestamp(remote.updatedAt)}${remote.updatedBy ? ` by ${remote.updatedBy}` : ""}`
-        };
+  doc.getElementById("copy-link-button").addEventListener("click", async () => {
+    try {
+      if (clipboard?.writeText) {
+        await clipboard.writeText(shareUrl);
+        updateStatus(doc, "Tracker link copied.", "success");
       } else {
-        state.data = cloneTrackerData(trackerData);
-        state.liveMeta = {
-          lastUpdatedText: "No live document yet — showing starter data"
-        };
+        updateStatus(doc, "Copy is not available here. Use the link field manually.", "warn");
       }
-
-      renderTracker(doc, state.data, state.liveMeta);
-      renderEditorForm(doc, state.data, state.canEdit);
-    },
-    (error) => {
-      updateLiveStatus(doc, error.message || "Live sync failed.", "error");
+    } catch {
+      updateStatus(doc, "Copy failed. Use the link field manually.", "error");
     }
-  );
+  });
 
   return state;
 };
 
 if (typeof document !== "undefined") {
-  const config = getFirebaseConfig(window.ASAT_FIREBASE_CONFIG);
-  initializeLiveTracker(document, config);
+  initializeTracker(document);
 }
 
 if (typeof module !== "undefined") {
   module.exports = {
+    STORAGE_KEY,
     trackerData,
     starKeys,
     formatScore,
@@ -639,10 +571,13 @@ if (typeof module !== "undefined") {
     calculateStarTotals,
     getTrackerMetrics,
     getProgressA11y,
-    getFirebaseConfig,
-    isConfiguredForLiveSync,
+    getShareUrl,
+    exportTrackerData,
+    importTrackerData,
+    saveTrackerState,
+    loadTrackerState,
     collectFormData,
     applyProgressA11y,
-    formatTimestamp
+    formatSavedStamp
   };
 }

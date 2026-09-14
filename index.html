@@ -29,19 +29,15 @@
       <section class="panel">
         <div class="panel-heading">
           <div>
-            <p class="eyebrow">Crystal network</p>
-            <h2>Live sharing and editing</h2>
+            <p class="eyebrow">Castle controls</p>
+            <h2>HTML tracker editor</h2>
           </div>
         </div>
         <div class="editor-shell">
           <div class="editor-topbar">
             <div>
-              <p id="sync-status" class="quest-status">Preparing live sync…</p>
-              <p id="editor-user" class="agent-meta">Not signed in</p>
-            </div>
-            <div class="editor-actions">
-              <button id="sign-in-button" class="castle-button" type="button">Sign in with Google</button>
-              <button id="sign-out-button" class="castle-button castle-button-secondary" type="button" hidden>Sign out</button>
+              <p id="sync-status" class="quest-status">Changes save in this browser.</p>
+              <p class="agent-meta">Edit here, export the data file, and share the tracker link or JSON snapshot with teammates.</p>
             </div>
           </div>
           <div class="share-box">
@@ -49,9 +45,18 @@
               <span class="editor-label">Shareable HTML link</span>
               <input id="share-url" class="editor-input" type="text" readonly>
             </label>
-            <a id="share-link" class="share-link" href="./index.html" target="_blank" rel="noreferrer">Open shared tracker</a>
+            <div class="editor-actions">
+              <a id="share-link" class="share-link" href="./index.html" target="_blank" rel="noreferrer">Open tracker</a>
+              <button id="copy-link-button" class="castle-button castle-button-secondary" type="button">Copy link</button>
+            </div>
           </div>
-          <form id="editor-form" class="editor-form" hidden>
+          <div class="editor-actions editor-actions-wrap">
+            <button id="export-button" class="castle-button castle-button-secondary" type="button">Export JSON</button>
+            <button id="import-button" class="castle-button castle-button-secondary" type="button">Import JSON</button>
+            <button id="reset-button" class="castle-button castle-button-secondary" type="button">Reset starter data</button>
+            <input id="import-file" type="file" accept="application/json" hidden>
+          </div>
+          <form id="editor-form" class="editor-form">
             <div id="editor-summary-fields" class="editor-summary-grid"></div>
             <div class="table-wrap">
               <table class="editor-table">
@@ -70,7 +75,7 @@
               </table>
             </div>
             <div class="editor-submit-row">
-              <button id="save-button" class="castle-button" type="submit">Save live update</button>
+              <button id="save-button" class="castle-button" type="submit">Save tracker changes</button>
             </div>
           </form>
         </div>
@@ -134,10 +139,6 @@
     </main>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-  <script src="./firebase-config.js"></script>
   <script src="./script.js"></script>
 </body>
 </html>

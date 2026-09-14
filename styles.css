@@ -202,6 +202,12 @@ h1 {
   grid-auto-flow: column;
 }
 
+.editor-actions-wrap {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-bottom: 20px;
+}
+
 .share-box {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
@@ -212,6 +218,7 @@ h1 {
   color: var(--gold);
   text-decoration: none;
   word-break: break-all;
+  align-self: center;
 }
 
 .editor-form {
