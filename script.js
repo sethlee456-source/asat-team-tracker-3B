@@ -25,32 +25,55 @@ const trackerData = {
   ]
 };
 
-const surveyedAgents = trackerData.agents.filter((agent) => agent.surveys);
-const missingAgents = trackerData.agents.filter((agent) => !agent.surveys);
-const totalResponses = surveyedAgents.reduce(
-  (sum, agent) => sum + Object.values(agent.surveys).reduce((count, value) => count + value, 0),
-  0
-);
-const starTotals = surveyedAgents.reduce(
-  (totals, agent) => {
-    Object.entries(agent.surveys).forEach(([star, count]) => {
-      totals[star] = (totals[star] || 0) + count;
-    });
-    return totals;
-  },
-  { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
-);
-const progressPercent = Math.min((trackerData.currentResult / trackerData.targetResult) * 100, 100);
-const delta = trackerData.currentResult - trackerData.targetResult;
-const focusAgents = surveyedAgents
-  .filter((agent) => agent.score < trackerData.targetResult)
-  .sort((a, b) => a.score - b.score);
-
 const formatScore = (value) => (value === null ? "N/A" : value.toFixed(2).replace(/\.00$/, ""));
+
 const totalSurveysForAgent = (agent) =>
   agent.surveys ? Object.values(agent.surveys).reduce((sum, value) => sum + value, 0) : 0;
-const createNode = (tagName, className, text) => {
-  const node = document.createElement(tagName);
+
+const calculateStarTotals = (agents) =>
+  agents.reduce(
+    (totals, agent) => {
+      Object.entries(agent.surveys).forEach(([star, count]) => {
+        totals[star] = (totals[star] || 0) + count;
+      });
+      return totals;
+    },
+    { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+  );
+
+const getTrackerMetrics = (data) => {
+  const surveyedAgents = data.agents.filter((agent) => agent.surveys);
+  const missingAgents = data.agents.filter((agent) => !agent.surveys);
+  const totalResponses = surveyedAgents.reduce((sum, agent) => sum + totalSurveysForAgent(agent), 0);
+  const starTotals = calculateStarTotals(surveyedAgents);
+  const delta = data.currentResult - data.targetResult;
+
+  return {
+    surveyedAgents,
+    missingAgents,
+    totalResponses,
+    starTotals,
+    delta,
+    progressPercent: Math.min((data.currentResult / 5) * 100, 100),
+    focusAgents: surveyedAgents
+      .filter((agent) => agent.score < data.targetResult)
+      .sort((a, b) => a.score - b.score)
+  };
+};
+
+const getProgressA11y = (data, delta) => ({
+  label: "ASAT score on the 5-point scale",
+  max: 5,
+  now: data.currentResult,
+  note: "Bar shows the current ASAT score on the full 5-point scale.",
+  text:
+    delta >= 0
+      ? `${data.currentResult.toFixed(2)} out of 5.00. Target ${data.targetResult.toFixed(2)} reached.`
+      : `${data.currentResult.toFixed(2)} out of 5.00. Target ${data.targetResult.toFixed(2)} still ahead.`
+});
+
+const createNode = (doc, tagName, className, text) => {
+  const node = doc.createElement(tagName);
 
   if (className) {
     node.className = className;
@@ -63,120 +86,151 @@ const createNode = (tagName, className, text) => {
   return node;
 };
 
-document.getElementById("current-score").textContent = trackerData.currentResult.toFixed(2);
-document.getElementById("score-delta").textContent =
-  delta >= 0 ? `+${delta.toFixed(2)} above target` : `${delta.toFixed(2)} below target`;
-document.getElementById("target-mark").textContent = `Target marker ${trackerData.targetResult.toFixed(2)}`;
-document.getElementById("current-mark").textContent = `Current ${trackerData.currentResult.toFixed(2)} / 5.00`;
-document.getElementById("scale-note").textContent = "Bar fills to 100% once the 4.20 target is reached.";
-document.getElementById("quest-status").textContent =
-  delta >= 0
-    ? "The fortress is safely above the target line."
-    : "The fortress needs more high-star wins to reach the target.";
-document.getElementById("progress-fill").style.width = `${progressPercent}%`;
-document
-  .querySelector(".progress-track")
-  .setAttribute("aria-valuenow", String(Math.min(trackerData.currentResult, trackerData.targetResult)));
-document
-  .querySelector(".progress-track")
-  .setAttribute(
-    "aria-valuetext",
-    delta >= 0
-      ? `Target reached. Current score ${trackerData.currentResult.toFixed(2)} exceeds the ${trackerData.targetResult.toFixed(2)} target.`
-      : `Current score ${trackerData.currentResult.toFixed(2)} out of ${trackerData.targetResult.toFixed(2)} target.`
-  );
+const appendCards = (container, cards) => {
+  cards.forEach((card) => container.append(card));
+};
 
-[
-  { label: "Party size", value: trackerData.totalAgents },
-  { label: "Surveyed heroes", value: surveyedAgents.length },
-  { label: "Unscouted heroes", value: missingAgents.length }
-]
-  .forEach((item) => {
-    const card = createNode("article", "stat-card");
-    card.append(createNode("span", "", item.label), createNode("strong", "", String(item.value)));
-    document.getElementById("hero-stats").append(card);
-  });
+const applyProgressA11y = (progressTrack, progressFill, a11yConfig, progressPercent) => {
+  progressTrack.setAttribute("aria-label", a11yConfig.label);
+  progressTrack.setAttribute("aria-valuemax", String(a11yConfig.max));
+  progressTrack.setAttribute("aria-valuenow", String(a11yConfig.now));
+  progressTrack.setAttribute("aria-valuetext", a11yConfig.text);
+  progressFill.style.width = `${progressPercent}%`;
+};
 
-[
-  { label: "Total survey scrolls", value: totalResponses, note: "All known responses gathered across the guild." },
-  { label: "5★ victories", value: starTotals[5], note: "Top-tier ratings powering the realm average." },
-  { label: "Lowest active score", value: formatScore(Math.min(...surveyedAgents.map((agent) => agent.score))), note: "Best place to focus recovery efforts." },
-  { label: "Unsurveyed agents", value: missingAgents.length, note: "Potential bonus points still hidden in the fog." }
-]
-  .forEach((item) => {
-    const card = createNode("article", "mini-card");
+const renderTracker = (doc, data) => {
+  const metrics = getTrackerMetrics(data);
+  const a11yConfig = getProgressA11y(data, metrics.delta);
+  const heroStats = doc.getElementById("hero-stats");
+  const overviewCards = doc.getElementById("overview-cards");
+  const starBreakdown = doc.getElementById("star-breakdown");
+  const priorityHeroes = doc.getElementById("priority-heroes");
+  const agentGrid = doc.getElementById("agent-grid");
+  const progressTrack = doc.querySelector(".progress-track");
+  const progressFill = doc.getElementById("progress-fill");
+
+  doc.getElementById("current-score").textContent = data.currentResult.toFixed(2);
+  doc.getElementById("score-delta").textContent =
+    metrics.delta >= 0 ? `+${metrics.delta.toFixed(2)} above target` : `${metrics.delta.toFixed(2)} below target`;
+  doc.getElementById("target-mark").textContent = `Target marker ${data.targetResult.toFixed(2)}`;
+  doc.getElementById("current-mark").textContent = `Current ${data.currentResult.toFixed(2)} / 5.00`;
+  doc.getElementById("scale-note").textContent = a11yConfig.note;
+  doc.getElementById("quest-status").textContent =
+    metrics.delta >= 0
+      ? "The fortress is safely above the target line."
+      : "The fortress needs more high-star wins to reach the target.";
+
+  applyProgressA11y(progressTrack, progressFill, a11yConfig, metrics.progressPercent);
+
+  appendCards(heroStats, [
+    { label: "Party size", value: data.totalAgents },
+    { label: "Surveyed heroes", value: metrics.surveyedAgents.length },
+    { label: "Unscouted heroes", value: metrics.missingAgents.length }
+  ].map((item) => {
+    const card = createNode(doc, "article", "stat-card");
+    card.append(createNode(doc, "span", "", item.label), createNode(doc, "strong", "", String(item.value)));
+    return card;
+  }));
+
+  appendCards(overviewCards, [
+    { label: "Total survey scrolls", value: metrics.totalResponses, note: "All known responses gathered across the guild." },
+    { label: "5★ victories", value: metrics.starTotals[5], note: "Top-tier ratings powering the realm average." },
+    {
+      label: "Lowest active score",
+      value: formatScore(Math.min(...metrics.surveyedAgents.map((agent) => agent.score))),
+      note: "Best place to focus recovery efforts."
+    },
+    { label: "Unsurveyed agents", value: metrics.missingAgents.length, note: "Potential bonus points still hidden in the fog." }
+  ].map((item) => {
+    const card = createNode(doc, "article", "mini-card");
     card.append(
-      createNode("span", "mini-label", item.label),
-      createNode("strong", "mini-value", String(item.value)),
-      createNode("p", "agent-meta", item.note)
+      createNode(doc, "span", "mini-label", item.label),
+      createNode(doc, "strong", "mini-value", String(item.value)),
+      createNode(doc, "p", "agent-meta", item.note)
     );
-    document.getElementById("overview-cards").append(card);
-  });
+    return card;
+  }));
 
-Object.entries(starTotals)
-  .sort((a, b) => Number(b[0]) - Number(a[0]))
-  .forEach(([star, count]) => {
-    const card = createNode("article", "star-card");
-    card.append(
-      createNode("span", "star-label", `${star}★ surveys`),
-      createNode("strong", "star-value", String(count))
-    );
-    document.getElementById("star-breakdown").append(card);
-  });
+  appendCards(starBreakdown, Object.entries(metrics.starTotals)
+    .sort((a, b) => Number(b[0]) - Number(a[0]))
+    .map(([star, count]) => {
+      const card = createNode(doc, "article", "star-card");
+      card.append(
+        createNode(doc, "span", "star-label", `${star}★ surveys`),
+        createNode(doc, "strong", "star-value", String(count))
+      );
+      return card;
+    }));
 
-if (focusAgents.length) {
-  focusAgents.forEach((agent) => {
-    const card = createNode("li", "priority-card");
-    card.append(
-      createNode("strong", "", agent.name),
-      createNode(
-        "span",
-        "agent-meta",
-        `Score ${formatScore(agent.score)} · ${totalSurveysForAgent(agent)} surveys logged`
-      )
-    );
-    document.getElementById("priority-heroes").append(card);
-  });
-} else {
-  const emptyState = createNode("li", "empty-state");
-  emptyState.append(
-    createNode("strong", "", "All active heroes are at or above target."),
-    createNode(
-      "p",
-      "empty-copy",
-      "Keep the castle defended by bringing the unsurveyed agents into the quest."
-    )
-  );
-  document.getElementById("priority-heroes").append(emptyState);
-}
-
-trackerData.agents.forEach((agent) => {
-  const card = createNode("li", "agent-card");
-  const topLine = createNode("div", "agent-topline");
-  const nameGroup = createNode("div");
-  const surveyBreakdown = createNode("div", "survey-breakdown");
-  const status = agent.surveys ? `${totalSurveysForAgent(agent)} surveys logged` : "Awaiting survey drops";
-
-  nameGroup.append(
-    createNode("strong", "agent-name", agent.name),
-    createNode("span", "agent-tag", status)
-  );
-  topLine.append(nameGroup, createNode("span", "agent-score", formatScore(agent.score)));
-
-  if (agent.surveys) {
-    Object.entries(agent.surveys)
-      .sort((a, b) => Number(b[0]) - Number(a[0]))
-      .forEach(([star, count]) => {
-        surveyBreakdown.append(createNode("span", "survey-pill", `${count} × ${star}★`));
-      });
+  if (metrics.focusAgents.length) {
+    appendCards(priorityHeroes, metrics.focusAgents.map((agent) => {
+      const card = createNode(doc, "li", "priority-card");
+      card.append(
+        createNode(doc, "strong", "", agent.name),
+        createNode(
+          doc,
+          "span",
+          "agent-meta",
+          `Score ${formatScore(agent.score)} · ${totalSurveysForAgent(agent)} surveys logged`
+        )
+      );
+      return card;
+    }));
   } else {
-    surveyBreakdown.append(createNode("span", "survey-pill", "No survey data yet"));
+    const emptyState = createNode(doc, "li", "empty-state");
+    emptyState.append(
+      createNode(doc, "strong", "", "All active heroes are at or above target."),
+      createNode(doc, "p", "empty-copy", "Keep the castle defended by bringing the unsurveyed agents into the quest.")
+    );
+    priorityHeroes.append(emptyState);
   }
 
-  card.append(
-    topLine,
-    createNode("p", "agent-meta", agent.surveys ? "Battle record" : "No tracked score yet"),
-    surveyBreakdown
-  );
-  document.getElementById("agent-grid").append(card);
-});
+  appendCards(agentGrid, data.agents.map((agent) => {
+    const card = createNode(doc, "li", "agent-card");
+    const topLine = createNode(doc, "div", "agent-topline");
+    const nameGroup = createNode(doc, "div");
+    const surveyBreakdown = createNode(doc, "div", "survey-breakdown");
+    const status = agent.surveys ? `${totalSurveysForAgent(agent)} surveys logged` : "Awaiting survey drops";
+
+    nameGroup.append(
+      createNode(doc, "strong", "agent-name", agent.name),
+      createNode(doc, "span", "agent-tag", status)
+    );
+    topLine.append(nameGroup, createNode(doc, "span", "agent-score", formatScore(agent.score)));
+
+    if (agent.surveys) {
+      Object.entries(agent.surveys)
+        .sort((a, b) => Number(b[0]) - Number(a[0]))
+        .forEach(([star, count]) => {
+          surveyBreakdown.append(createNode(doc, "span", "survey-pill", `${count} × ${star}★`));
+        });
+    } else {
+      surveyBreakdown.append(createNode(doc, "span", "survey-pill", "No survey data yet"));
+    }
+
+    card.append(
+      topLine,
+      createNode(doc, "p", "agent-meta", agent.surveys ? "Battle record" : "No tracked score yet"),
+      surveyBreakdown
+    );
+
+    return card;
+  }));
+};
+
+if (typeof document !== "undefined") {
+  renderTracker(document, trackerData);
+}
+
+if (typeof module !== "undefined") {
+  module.exports = {
+    trackerData,
+    formatScore,
+    totalSurveysForAgent,
+    calculateStarTotals,
+    getTrackerMetrics,
+    getProgressA11y,
+    applyProgressA11y,
+    renderTracker
+  };
+}
