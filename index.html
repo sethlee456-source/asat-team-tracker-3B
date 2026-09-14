@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team 3B ASAT Tracker</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">ASAT stronghold // <span id="team-name">Team 3B</span></p>
+        <h1>Castle of the Crimson Surveys</h1>
+        <p class="hero-text">
+          Track the party's survey power, defend the realm average, and focus on the heroes who need the next boost.
+        </p>
+        <div class="hero-stats" id="hero-stats"></div>
+        <p class="live-stamp" id="live-stamp"></p>
+      </div>
+      <div class="score-orb">
+        <span class="orb-label">Realm score</span>
+        <strong id="current-score"></strong>
+        <span id="score-delta"></span>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Castle controls</p>
+            <h2>HTML tracker editor</h2>
+          </div>
+        </div>
+        <div class="editor-shell">
+          <div class="editor-topbar">
+            <div>
+              <p id="sync-status" class="quest-status">Changes save in this browser.</p>
+              <p class="agent-meta">Edit here, export the data file, and share the tracker link or JSON snapshot with teammates.</p>
+            </div>
+          </div>
+          <div class="share-box">
+            <label class="editor-field">
+              <span class="editor-label">Shareable HTML link</span>
+              <input id="share-url" class="editor-input" type="text" readonly>
+            </label>
+            <div class="editor-actions">
+              <a id="share-link" class="share-link" href="./index.html" target="_blank" rel="noreferrer">Open tracker</a>
+              <button id="copy-link-button" class="castle-button castle-button-secondary" type="button">Copy link</button>
+            </div>
+          </div>
+          <div class="editor-actions editor-actions-wrap">
+            <button id="export-button" class="castle-button castle-button-secondary" type="button">Export JSON</button>
+            <button id="import-button" class="castle-button castle-button-secondary" type="button">Import JSON</button>
+            <button id="reset-button" class="castle-button castle-button-secondary" type="button">Reset starter data</button>
+            <input id="import-file" type="file" accept="application/json" hidden>
+          </div>
+          <form id="editor-form" class="editor-form">
+            <div id="editor-summary-fields" class="editor-summary-grid"></div>
+            <div class="table-wrap">
+              <table class="editor-table">
+                <thead>
+                  <tr>
+                    <th>Agent</th>
+                    <th>Score</th>
+                    <th>5★</th>
+                    <th>4★</th>
+                    <th>3★</th>
+                    <th>2★</th>
+                    <th>1★</th>
+                  </tr>
+                </thead>
+                <tbody id="editor-agent-rows"></tbody>
+              </table>
+            </div>
+            <div class="editor-submit-row">
+              <button id="save-button" class="castle-button" type="submit">Save tracker changes</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Quest overview</p>
+            <h2>Stronghold status</h2>
+          </div>
+          <p id="quest-status" class="quest-status"></p>
+        </div>
+        <div class="progress-card">
+          <div
+            class="progress-track"
+            role="progressbar"
+            aria-label="ASAT score on the 5-point scale"
+            aria-valuemin="0"
+            aria-valuemax="5"
+            aria-valuenow="0"
+            aria-valuetext=""
+          >
+            <div id="progress-fill" class="progress-fill"></div>
+          </div>
+          <div class="progress-marks">
+            <span id="target-mark"></span>
+            <span id="current-mark"></span>
+          </div>
+          <p id="scale-note" class="quest-status"></p>
+        </div>
+        <div class="grid duo" id="overview-cards"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Star chamber</p>
+            <h2>Survey treasure hoard</h2>
+          </div>
+        </div>
+        <div class="grid stars-and-focus">
+          <div class="star-breakdown" id="star-breakdown"></div>
+          <div class="focus-list">
+            <h3>Priority heroes</h3>
+            <p>The lowest-scoring active adventurers who can lift the fortress even higher.</p>
+            <ul id="priority-heroes" class="priority-heroes"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Guild roster</p>
+            <h2 id="roster-count">All 18 agents</h2>
+          </div>
+        </div>
+        <ul id="agent-grid" class="agent-grid"></ul>
+      </section>
+    </main>
+  </div>
+
+  <script src="./script.js"></script>
+</body>
+</html>

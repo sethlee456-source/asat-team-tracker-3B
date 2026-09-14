@@ -1,0 +1,485 @@
+:root {
+  color-scheme: dark;
+  --bg: #07070b;
+  --panel: rgba(18, 20, 33, 0.88);
+  --panel-strong: rgba(29, 31, 48, 0.96);
+  --line: rgba(164, 182, 255, 0.18);
+  --text: #eef2ff;
+  --muted: #adb8de;
+  --accent: #7c5cff;
+  --accent-soft: #2f2458;
+  --gold: #f0c36a;
+  --danger: #ff7b9c;
+  --success: #76f7bf;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(124, 92, 255, 0.3), transparent 32%),
+    linear-gradient(180deg, rgba(11, 14, 25, 0.96), rgba(7, 7, 11, 1)),
+    var(--bg);
+  color: var(--text);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(transparent 0 92%, rgba(255, 255, 255, 0.03) 92% 100%),
+    linear-gradient(90deg, transparent 0 97%, rgba(255, 255, 255, 0.025) 97% 100%);
+  background-size: 100% 140px, 180px 100%;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.page-shell {
+  width: min(1200px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 48px;
+}
+
+.hero,
+.panel,
+.agent-card,
+.stat-card,
+.star-card {
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 24px;
+  padding: 28px;
+  margin-bottom: 24px;
+  border-radius: 28px;
+  background:
+    linear-gradient(135deg, rgba(37, 23, 77, 0.84), rgba(12, 16, 29, 0.96)),
+    var(--panel);
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.75rem;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 14px;
+  font-size: clamp(2.25rem, 5vw, 3.6rem);
+}
+
+.hero-text,
+.quest-status,
+.focus-list p,
+.agent-meta,
+.empty-copy {
+  color: var(--muted);
+}
+
+.live-stamp {
+  margin-bottom: 0;
+  color: var(--success);
+}
+
+.hero-stats,
+.grid,
+.agent-grid,
+.priority-heroes {
+  display: grid;
+  gap: 16px;
+}
+
+.agent-grid,
+.priority-heroes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hero-stats {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  margin-top: 24px;
+}
+
+.stat-card {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.stat-card span,
+.mini-label,
+.star-label,
+.agent-tag {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.stat-card strong,
+.mini-value,
+.star-value,
+.agent-score {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.6rem;
+}
+
+.score-orb {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  min-height: 220px;
+  padding: 20px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle, rgba(118, 247, 191, 0.18), transparent 56%),
+    radial-gradient(circle at top, rgba(240, 195, 106, 0.16), transparent 45%),
+    rgba(6, 8, 18, 0.92);
+  text-align: center;
+}
+
+.orb-label {
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+}
+
+.score-orb strong {
+  margin: 12px 0 4px;
+  font-size: clamp(2.8rem, 8vw, 4.6rem);
+}
+
+.score-orb span:last-child {
+  color: var(--success);
+}
+
+.panel {
+  margin-bottom: 24px;
+  padding: 24px;
+  border-radius: 24px;
+  background: var(--panel);
+}
+
+.editor-shell,
+.share-box,
+.editor-summary-grid,
+.editor-actions,
+.editor-topbar,
+.editor-submit-row {
+  display: grid;
+  gap: 16px;
+}
+
+.editor-topbar {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  margin-bottom: 20px;
+}
+
+.editor-actions {
+  grid-auto-flow: column;
+}
+
+.editor-actions-wrap {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-bottom: 20px;
+}
+
+.share-box {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  margin-bottom: 20px;
+}
+
+.share-link {
+  color: var(--gold);
+  text-decoration: none;
+  word-break: break-all;
+  align-self: center;
+}
+
+.editor-form {
+  display: grid;
+  gap: 20px;
+}
+
+.editor-summary-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.editor-field {
+  display: grid;
+  gap: 8px;
+}
+
+.editor-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.editor-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(164, 182, 255, 0.2);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font: inherit;
+}
+
+.editor-input:read-only,
+.editor-input:disabled {
+  opacity: 0.8;
+}
+
+.castle-button {
+  padding: 12px 16px;
+  border: 1px solid rgba(124, 92, 255, 0.5);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(124, 92, 255, 0.95), rgba(73, 41, 169, 0.95));
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.castle-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.castle-button-secondary {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.editor-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.editor-table th,
+.editor-table td {
+  padding: 10px 8px;
+  text-align: left;
+  border-bottom: 1px solid rgba(164, 182, 255, 0.12);
+}
+
+.editor-table th {
+  color: var(--gold);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+}
+
+.agent-table-name {
+  min-width: 180px;
+}
+
+#sync-status[data-tone="success"] {
+  color: var(--success);
+}
+
+#sync-status[data-tone="warn"] {
+  color: var(--gold);
+}
+
+#sync-status[data-tone="error"] {
+  color: var(--danger);
+}
+
+.panel-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: end;
+  margin-bottom: 18px;
+}
+
+.progress-card {
+  margin-bottom: 22px;
+}
+
+.progress-track {
+  height: 18px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--gold));
+}
+
+.progress-marks,
+.duo,
+.stars-and-focus {
+  display: grid;
+  gap: 16px;
+}
+
+.progress-marks,
+.duo {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.duo,
+.stars-and-focus {
+  align-items: start;
+}
+
+.mini-card,
+.focus-list,
+.star-card,
+.agent-card {
+  padding: 18px;
+  border-radius: 20px;
+  background: var(--panel-strong);
+}
+
+.stars-and-focus {
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+}
+
+.star-breakdown {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+}
+
+.star-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.star-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -18px -18px auto;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: rgba(124, 92, 255, 0.13);
+}
+
+.priority-heroes {
+  margin-top: 16px;
+}
+
+.priority-card {
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 123, 156, 0.25);
+  background: rgba(255, 123, 156, 0.07);
+}
+
+.priority-card strong,
+.agent-name {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.agent-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.agent-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.agent-topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.agent-score {
+  color: var(--gold);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.agent-tag {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(124, 92, 255, 0.16);
+  border: 1px solid rgba(124, 92, 255, 0.28);
+}
+
+.survey-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.survey-pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(240, 195, 106, 0.11);
+  color: var(--text);
+  font-size: 0.83rem;
+}
+
+.empty-state {
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px dashed rgba(173, 184, 222, 0.24);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+@media (max-width: 860px) {
+  .hero,
+  .stars-and-focus,
+  .progress-marks,
+  .duo {
+    grid-template-columns: 1fr;
+  }
+
+  .score-orb {
+    min-height: 180px;
+  }
+
+  .panel-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .editor-topbar,
+  .share-box {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-actions {
+    grid-auto-flow: row;
+  }
+}

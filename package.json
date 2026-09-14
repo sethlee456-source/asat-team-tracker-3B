@@ -1,0 +1,13 @@
+{
+  "name": "asat-team-tracker-3b",
+  "version": "1.0.0",
+  "description": "Dark castle RPG-themed ASAT tracker for Team 3B",
+  "main": "script.js",
+  "scripts": {
+    "start": "python3 -m http.server 4173",
+    "test": "node --test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
