@@ -104,6 +104,13 @@ h1 {
   gap: 16px;
 }
 
+.agent-grid,
+.priority-heroes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 .hero-stats {
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   margin-top: 24px;

@@ -40,7 +40,7 @@ const starTotals = surveyedAgents.reduce(
   },
   { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
 );
-const progressPercent = Math.min((trackerData.currentResult / 5) * 100, 100);
+const progressPercent = Math.min((trackerData.currentResult / trackerData.targetResult) * 100, 100);
 const delta = trackerData.currentResult - trackerData.targetResult;
 const focusAgents = surveyedAgents
   .filter((agent) => agent.score < trackerData.targetResult)
@@ -68,7 +68,7 @@ document.getElementById("score-delta").textContent =
   delta >= 0 ? `+${delta.toFixed(2)} above target` : `${delta.toFixed(2)} below target`;
 document.getElementById("target-mark").textContent = `Target marker ${trackerData.targetResult.toFixed(2)}`;
 document.getElementById("current-mark").textContent = `Current ${trackerData.currentResult.toFixed(2)} / 5.00`;
-document.getElementById("scale-note").textContent = "Bar shows the current ASAT score on the full 5-point scale.";
+document.getElementById("scale-note").textContent = "Bar fills to 100% once the 4.20 target is reached.";
 document.getElementById("quest-status").textContent =
   delta >= 0
     ? "The fortress is safely above the target line."
@@ -76,12 +76,14 @@ document.getElementById("quest-status").textContent =
 document.getElementById("progress-fill").style.width = `${progressPercent}%`;
 document
   .querySelector(".progress-track")
-  .setAttribute("aria-valuenow", String(trackerData.currentResult));
+  .setAttribute("aria-valuenow", String(Math.min(trackerData.currentResult, trackerData.targetResult)));
 document
   .querySelector(".progress-track")
   .setAttribute(
     "aria-valuetext",
-    `${trackerData.currentResult.toFixed(2)} out of 5.00 on the ASAT scale, with a target of ${trackerData.targetResult.toFixed(2)}`
+    delta >= 0
+      ? `Target reached. Current score ${trackerData.currentResult.toFixed(2)} exceeds the ${trackerData.targetResult.toFixed(2)} target.`
+      : `Current score ${trackerData.currentResult.toFixed(2)} out of ${trackerData.targetResult.toFixed(2)} target.`
   );
 
 [
@@ -124,7 +126,7 @@ Object.entries(starTotals)
 
 if (focusAgents.length) {
   focusAgents.forEach((agent) => {
-    const card = createNode("article", "priority-card");
+    const card = createNode("li", "priority-card");
     card.append(
       createNode("strong", "", agent.name),
       createNode(
@@ -136,7 +138,7 @@ if (focusAgents.length) {
     document.getElementById("priority-heroes").append(card);
   });
 } else {
-  const emptyState = createNode("div", "empty-state");
+  const emptyState = createNode("li", "empty-state");
   emptyState.append(
     createNode("strong", "", "All active heroes are at or above target."),
     createNode(
@@ -149,7 +151,7 @@ if (focusAgents.length) {
 }
 
 trackerData.agents.forEach((agent) => {
-  const card = createNode("article", "agent-card");
+  const card = createNode("li", "agent-card");
   const topLine = createNode("div", "agent-topline");
   const nameGroup = createNode("div");
   const surveyBreakdown = createNode("div", "survey-breakdown");
