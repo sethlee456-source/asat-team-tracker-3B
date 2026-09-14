@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team 3B ASAT Tracker</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">ASAT stronghold // Team 3B</p>
+        <h1>Castle of the Crimson Surveys</h1>
+        <p class="hero-text">
+          Track the party's survey power, defend the realm average, and focus on the heroes who need the next boost.
+        </p>
+        <div class="hero-stats" id="hero-stats"></div>
+      </div>
+      <div class="score-orb">
+        <span class="orb-label">Realm score</span>
+        <strong id="current-score"></strong>
+        <span id="score-delta"></span>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Quest overview</p>
+            <h2>Stronghold status</h2>
+          </div>
+          <p id="quest-status" class="quest-status"></p>
+        </div>
+        <div class="progress-card">
+          <div class="progress-track" aria-hidden="true">
+            <div id="progress-fill" class="progress-fill"></div>
+          </div>
+          <div class="progress-marks">
+            <span>Target 4.20</span>
+            <span>Current 4.54</span>
+          </div>
+        </div>
+        <div class="grid duo" id="overview-cards"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Star chamber</p>
+            <h2>Survey treasure hoard</h2>
+          </div>
+        </div>
+        <div class="grid stars-and-focus">
+          <div class="star-breakdown" id="star-breakdown"></div>
+          <div class="focus-list">
+            <h3>Priority heroes</h3>
+            <p>The lowest-scoring active adventurers who can lift the fortress even higher.</p>
+            <div id="priority-heroes" class="priority-heroes"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Guild roster</p>
+            <h2>All 18 agents</h2>
+          </div>
+        </div>
+        <div id="agent-grid" class="agent-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./script.js"></script>
+</body>
+</html>
