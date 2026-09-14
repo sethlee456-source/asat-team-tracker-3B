@@ -40,7 +40,7 @@ const starTotals = surveyedAgents.reduce(
   },
   { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
 );
-const progressPercent = Math.min((trackerData.currentResult / trackerData.targetResult) * 100, 100);
+const progressPercent = Math.min((trackerData.currentResult / 5) * 100, 100);
 const delta = trackerData.currentResult - trackerData.targetResult;
 const focusAgents = surveyedAgents
   .filter((agent) => agent.score < trackerData.targetResult)
@@ -49,6 +49,19 @@ const focusAgents = surveyedAgents
 const formatScore = (value) => (value === null ? "N/A" : value.toFixed(2).replace(/\.00$/, ""));
 const totalSurveysForAgent = (agent) =>
   agent.surveys ? Object.values(agent.surveys).reduce((sum, value) => sum + value, 0) : 0;
+const createNode = (tagName, className, text) => {
+  const node = document.createElement(tagName);
+
+  if (className) {
+    node.className = className;
+  }
+
+  if (text !== undefined) {
+    node.textContent = text;
+  }
+
+  return node;
+};
 
 document.getElementById("current-score").textContent = trackerData.currentResult.toFixed(2);
 document.getElementById("score-delta").textContent =
@@ -70,86 +83,97 @@ document
     `${trackerData.currentResult.toFixed(2)} out of ${trackerData.targetResult.toFixed(2)} target score`
   );
 
-document.getElementById("hero-stats").innerHTML = [
+[
   { label: "Party size", value: trackerData.totalAgents },
   { label: "Surveyed heroes", value: surveyedAgents.length },
   { label: "Unscouted heroes", value: missingAgents.length }
 ]
-  .map(
-    (item) => `
-      <article class="stat-card">
-        <span>${item.label}</span>
-        <strong>${item.value}</strong>
-      </article>
-    `
-  )
-  .join("");
+  .forEach((item) => {
+    const card = createNode("article", "stat-card");
+    card.append(createNode("span", "", item.label), createNode("strong", "", String(item.value)));
+    document.getElementById("hero-stats").append(card);
+  });
 
-document.getElementById("overview-cards").innerHTML = [
+[
   { label: "Total survey scrolls", value: totalResponses, note: "All known responses gathered across the guild." },
   { label: "5★ victories", value: starTotals[5], note: "Top-tier ratings powering the realm average." },
   { label: "Lowest active score", value: formatScore(Math.min(...surveyedAgents.map((agent) => agent.score))), note: "Best place to focus recovery efforts." },
   { label: "Unsurveyed agents", value: missingAgents.length, note: "Potential bonus points still hidden in the fog." }
 ]
-  .map(
-    (item) => `
-      <article class="mini-card">
-        <span class="mini-label">${item.label}</span>
-        <strong class="mini-value">${item.value}</strong>
-        <p class="agent-meta">${item.note}</p>
-      </article>
-    `
-  )
-  .join("");
+  .forEach((item) => {
+    const card = createNode("article", "mini-card");
+    card.append(
+      createNode("span", "mini-label", item.label),
+      createNode("strong", "mini-value", String(item.value)),
+      createNode("p", "agent-meta", item.note)
+    );
+    document.getElementById("overview-cards").append(card);
+  });
 
-document.getElementById("star-breakdown").innerHTML = Object.entries(starTotals)
+Object.entries(starTotals)
   .sort((a, b) => Number(b[0]) - Number(a[0]))
-  .map(
-    ([star, count]) => `
-      <article class="star-card">
-        <span class="star-label">${star}★ surveys</span>
-        <strong class="star-value">${count}</strong>
-      </article>
-    `
-  )
-  .join("");
+  .forEach(([star, count]) => {
+    const card = createNode("article", "star-card");
+    card.append(
+      createNode("span", "star-label", `${star}★ surveys`),
+      createNode("strong", "star-value", String(count))
+    );
+    document.getElementById("star-breakdown").append(card);
+  });
 
-document.getElementById("priority-heroes").innerHTML = focusAgents.length
-  ? focusAgents
-      .map(
-        (agent) => `
-          <article class="priority-card">
-            <strong>${agent.name}</strong>
-            <span class="agent-meta">Score ${formatScore(agent.score)} · ${totalSurveysForAgent(agent)} surveys logged</span>
-          </article>
-        `
+if (focusAgents.length) {
+  focusAgents.forEach((agent) => {
+    const card = createNode("article", "priority-card");
+    card.append(
+      createNode("strong", "", agent.name),
+      createNode(
+        "span",
+        "agent-meta",
+        `Score ${formatScore(agent.score)} · ${totalSurveysForAgent(agent)} surveys logged`
       )
-      .join("")
-  : `<div class="empty-state"><strong>All active heroes are at or above target.</strong><p class="empty-copy">Keep the castle defended by bringing the unsurveyed agents into the quest.</p></div>`;
+    );
+    document.getElementById("priority-heroes").append(card);
+  });
+} else {
+  const emptyState = createNode("div", "empty-state");
+  emptyState.append(
+    createNode("strong", "", "All active heroes are at or above target."),
+    createNode(
+      "p",
+      "empty-copy",
+      "Keep the castle defended by bringing the unsurveyed agents into the quest."
+    )
+  );
+  document.getElementById("priority-heroes").append(emptyState);
+}
 
-document.getElementById("agent-grid").innerHTML = trackerData.agents
-  .map((agent) => {
-    const surveyPills = agent.surveys
-      ? Object.entries(agent.surveys)
-          .sort((a, b) => Number(b[0]) - Number(a[0]))
-          .map(([star, count]) => `<span class="survey-pill">${count} × ${star}★</span>`)
-          .join("")
-      : '<span class="survey-pill">No survey data yet</span>';
+trackerData.agents.forEach((agent) => {
+  const card = createNode("article", "agent-card");
+  const topLine = createNode("div", "agent-topline");
+  const nameGroup = createNode("div");
+  const surveyBreakdown = createNode("div", "survey-breakdown");
+  const status = agent.surveys ? `${totalSurveysForAgent(agent)} surveys logged` : "Awaiting survey drops";
 
-    const status = agent.surveys ? `${totalSurveysForAgent(agent)} surveys logged` : "Awaiting survey drops";
+  nameGroup.append(
+    createNode("strong", "agent-name", agent.name),
+    createNode("span", "agent-tag", status)
+  );
+  topLine.append(nameGroup, createNode("span", "agent-score", formatScore(agent.score)));
 
-    return `
-      <article class="agent-card">
-        <div class="agent-topline">
-          <div>
-            <strong class="agent-name">${agent.name}</strong>
-            <span class="agent-tag">${status}</span>
-          </div>
-          <span class="agent-score">${formatScore(agent.score)}</span>
-        </div>
-        <p class="agent-meta">${agent.surveys ? "Battle record" : "No tracked score yet"}</p>
-        <div class="survey-breakdown">${surveyPills}</div>
-      </article>
-    `;
-  })
-  .join("");
+  if (agent.surveys) {
+    Object.entries(agent.surveys)
+      .sort((a, b) => Number(b[0]) - Number(a[0]))
+      .forEach(([star, count]) => {
+        surveyBreakdown.append(createNode("span", "survey-pill", `${count} × ${star}★`));
+      });
+  } else {
+    surveyBreakdown.append(createNode("span", "survey-pill", "No survey data yet"));
+  }
+
+  card.append(
+    topLine,
+    createNode("p", "agent-meta", agent.surveys ? "Battle record" : "No tracked score yet"),
+    surveyBreakdown
+  );
+  document.getElementById("agent-grid").append(card);
+});
