@@ -7,10 +7,6 @@
     "start": "python3 -m http.server 4173",
     "test": "echo \"No automated tests configured\""
   },
-  "repository": {
-    "type": "git",
-    "url": "http://localhost:26831/sethlee456-source/asat-team-tracker-3B"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC"

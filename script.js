@@ -40,7 +40,7 @@ const starTotals = surveyedAgents.reduce(
   },
   { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
 );
-const progressPercent = Math.min((trackerData.currentResult / 5) * 100, 100);
+const progressPercent = Math.min((trackerData.currentResult / trackerData.targetResult) * 100, 100);
 const delta = trackerData.currentResult - trackerData.targetResult;
 const focusAgents = surveyedAgents
   .filter((agent) => agent.score < trackerData.targetResult)
@@ -58,6 +58,15 @@ document.getElementById("quest-status").textContent =
     ? "The fortress is safely above the target line."
     : "The fortress needs more high-star wins to reach the target.";
 document.getElementById("progress-fill").style.width = `${progressPercent}%`;
+document
+  .querySelector(".progress-track")
+  .setAttribute("aria-valuenow", String(Math.min(trackerData.currentResult, trackerData.targetResult)));
+document
+  .querySelector(".progress-track")
+  .setAttribute(
+    "aria-valuetext",
+    `${trackerData.currentResult.toFixed(2)} out of ${trackerData.targetResult.toFixed(2)} target score`
+  );
 
 document.getElementById("hero-stats").innerHTML = [
   { label: "Party size", value: trackerData.totalAgents },
